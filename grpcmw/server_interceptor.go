@@ -40,7 +40,7 @@ func NewStreamServerInterceptor(arr ...grpc.StreamServerInterceptor) StreamServe
 	}
 }
 
-func chainStream(current grpc.StreamServerInterceptor, info *grpc.StreamServerInfo, next grpc.StreamHandler) grpc.StreamHandler {
+func chainStreamServerInterceptor(current grpc.StreamServerInterceptor, info *grpc.StreamServerInfo, next grpc.StreamHandler) grpc.StreamHandler {
 	return func(srv interface{}, stream grpc.ServerStream) error {
 		return current(srv, stream, info, next)
 	}
@@ -56,7 +56,7 @@ func (si streamServerInterceptor) StreamInterceptor() grpc.StreamServerIntercept
 		// TODO: Find a more efficient way
 		interceptor := handler
 		for idx := len(si.interceptors) - 1; idx >= 0; idx-- {
-			interceptor = chainStream(si.interceptors[idx], info, interceptor)
+			interceptor = chainStreamServerInterceptor(si.interceptors[idx], info, interceptor)
 		}
 		return interceptor(srv, ss)
 	}
@@ -86,7 +86,7 @@ func NewUnaryServerInterceptor(arr ...grpc.UnaryServerInterceptor) UnaryServerIn
 	}
 }
 
-func chainUnary(current grpc.UnaryServerInterceptor, info *grpc.UnaryServerInfo, next grpc.UnaryHandler) grpc.UnaryHandler {
+func chainUnaryServerInterceptor(current grpc.UnaryServerInterceptor, info *grpc.UnaryServerInfo, next grpc.UnaryHandler) grpc.UnaryHandler {
 	return func(ctx context.Context, req interface{}) (interface{}, error) {
 		return current(ctx, req, info, next)
 	}
@@ -102,7 +102,7 @@ func (ui *unaryServerInterceptor) UnaryInterceptor() grpc.UnaryServerInterceptor
 		// TODO: Find a more efficient way
 		interceptor := handler
 		for idx := len(ui.interceptors) - 1; idx >= 0; idx-- {
-			interceptor = chainUnary(ui.interceptors[idx], info, interceptor)
+			interceptor = chainUnaryServerInterceptor(ui.interceptors[idx], info, interceptor)
 		}
 		return interceptor(ctx, req)
 	}

@@ -3,7 +3,6 @@ package grpcmw
 import (
 	"errors"
 	"fmt"
-	"regexp"
 
 	"golang.org/x/net/context"
 
@@ -25,10 +24,6 @@ type serverRouter struct {
 	ServerInterceptorRegister
 }
 
-var (
-	routeRegexp = regexp.MustCompile("\\/(?:(.+)\\.(?:(.+)\\/(.+)|(.+))|(.+))")
-)
-
 // NewServerRouter initializes a `ServerRouter`.
 // This implementation is based on the official route format used by gRPC,
 // which is the following:
@@ -49,7 +44,7 @@ func NewServerRouter() ServerRouter {
 	}
 }
 
-func resolveRec(pathTokens []string, lvl ServerInterceptor, cb func(lvl ServerInterceptor), force bool) (ServerInterceptor, error) {
+func resolveServerInterceptorRec(pathTokens []string, lvl ServerInterceptor, cb func(lvl ServerInterceptor), force bool) (ServerInterceptor, error) {
 	if cb != nil {
 		cb(lvl)
 	}
@@ -73,10 +68,10 @@ func resolveRec(pathTokens []string, lvl ServerInterceptor, cb func(lvl ServerIn
 			return nil, nil
 		}
 	}
-	return resolveRec(pathTokens[1:], sub, cb, force)
+	return resolveServerInterceptorRec(pathTokens[1:], sub, cb, force)
 }
 
-func resolve(route string, lvl ServerInterceptor, cb func(lvl ServerInterceptor), force bool) (ServerInterceptor, error) {
+func resolveServerInterceptor(route string, lvl ServerInterceptor, cb func(lvl ServerInterceptor), force bool) (ServerInterceptor, error) {
 	matchs := routeRegexp.FindStringSubmatch(route)
 	if len(matchs) == 0 {
 		return nil, errors.New("Invalid route")
@@ -87,7 +82,7 @@ func resolve(route string, lvl ServerInterceptor, cb func(lvl ServerInterceptor)
 	} else if len(matchs[5]) > 0 {
 		tokens[0] = matchs[5]
 	}
-	return resolveRec(tokens, lvl, cb, force)
+	return resolveServerInterceptorRec(tokens, lvl, cb, force)
 }
 
 // UnaryResolver returns a `grpc.UnaryServerInterceptor` that resolves the route
@@ -95,7 +90,7 @@ func resolve(route string, lvl ServerInterceptor, cb func(lvl ServerInterceptor)
 func (r *serverRouter) UnaryResolver() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		interceptor := NewUnaryServerInterceptor()
-		_, err := resolve(info.FullMethod, r.ServerInterceptorRegister, func(lvl ServerInterceptor) {
+		_, err := resolveServerInterceptor(info.FullMethod, r.ServerInterceptorRegister, func(lvl ServerInterceptor) {
 			interceptor.AddUnaryInterceptor(lvl)
 		}, false)
 		if err != nil {
@@ -111,7 +106,7 @@ func (r *serverRouter) UnaryResolver() grpc.UnaryServerInterceptor {
 func (r *serverRouter) StreamResolver() grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		interceptor := NewStreamServerInterceptor()
-		_, err := resolve(info.FullMethod, r.ServerInterceptorRegister, func(lvl ServerInterceptor) {
+		_, err := resolveServerInterceptor(info.FullMethod, r.ServerInterceptorRegister, func(lvl ServerInterceptor) {
 			interceptor.AddStreamInterceptor(lvl)
 		}, false)
 		if err != nil {
@@ -127,7 +122,7 @@ func (r *serverRouter) StreamResolver() grpc.StreamServerInterceptor {
 // - for the service level: /package.service
 // - for the method level: /package.service/method
 func (r *serverRouter) AddUnaryServerInterceptor(route string, interceptors ...grpc.UnaryServerInterceptor) error {
-	lvl, err := resolve(route, r.ServerInterceptorRegister, nil, true)
+	lvl, err := resolveServerInterceptor(route, r.ServerInterceptorRegister, nil, true)
 	if err != nil {
 		return err
 	}
@@ -141,7 +136,7 @@ func (r *serverRouter) AddUnaryServerInterceptor(route string, interceptors ...g
 // - for the service level: /package.service
 // - for the method level: /package.service/method
 func (r *serverRouter) AddStreamServerInterceptor(route string, interceptors ...grpc.StreamServerInterceptor) error {
-	lvl, err := resolve(route, r.ServerInterceptorRegister, nil, true)
+	lvl, err := resolveServerInterceptor(route, r.ServerInterceptorRegister, nil, true)
 	if err != nil {
 		return err
 	}
