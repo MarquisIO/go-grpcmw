@@ -18,14 +18,16 @@ type Service struct {
 	Methods []Method
 }
 
-type Package struct {
-	Package  string
-	Services []Service
+type TemplateData struct {
+	DefineRouter bool
+	Package      string
+	Services     []Service
 }
 
-func GetPackage(src *descriptor.FileDescriptorProto) *Package {
-	pkg := &Package{
-		Package: src.GetPackage(),
+func getTemplateData(src *descriptor.FileDescriptorProto, defineRouter bool) *TemplateData {
+	pkg := &TemplateData{
+		Package:      src.GetPackage(),
+		DefineRouter: defineRouter,
 	}
 	for _, service := range src.GetService() {
 		s := Service{
