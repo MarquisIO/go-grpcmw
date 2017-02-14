@@ -1,52 +1,67 @@
 package grpcmw
 
-type ServerInterceptorLevel interface {
+// ServerInterceptor represent a server interceptor that exposes both
+// `UnaryServerInterceptor` and `StreamServerInterceptor` and that can be
+// indexed.
+type ServerInterceptor interface {
 	UnaryServerInterceptor
 	StreamServerInterceptor
 	Index() string
 }
 
-type ServerInterceptorLevelRegister interface {
-	ServerInterceptorLevel
-	AddSubLevel(level ServerInterceptorLevel)
-	Get(key string) (ServerInterceptorLevel, bool)
+// ServerInterceptorRegister represents a register of `ServerInterceptor`,
+// indexing them by using their method `Index`.
+// It also implements `ServerInterceptor`.
+type ServerInterceptorRegister interface {
+	ServerInterceptor
+	Register(level ServerInterceptor)
+	Get(key string) (ServerInterceptor, bool)
 }
 
-type LowerServerInterceptorLevel struct {
+type lowerServerInterceptor struct {
 	UnaryServerInterceptor
 	StreamServerInterceptor
 	index string
 }
 
-type HigherServerInterceptorLevel struct {
-	ServerInterceptorLevel
-	sublevels map[string]ServerInterceptorLevel
+type higherServerInterceptorLevel struct {
+	ServerInterceptor
+	sublevels map[string]ServerInterceptor
 }
 
-func NewServerInterceptorLevel(index string) ServerInterceptorLevel {
-	return &LowerServerInterceptorLevel{
+// NewServerInterceptor initializes a new `ServerInterceptor` with `index`
+// as its index.
+func NewServerInterceptor(index string) ServerInterceptor {
+	return &lowerServerInterceptor{
 		UnaryServerInterceptor:  NewUnaryServerInterceptor(),
 		StreamServerInterceptor: NewStreamServerInterceptor(),
 		index: index,
 	}
 }
 
-func (l LowerServerInterceptorLevel) Index() string {
+// Index returns the index of the `ServerInterceptor`.
+func (l lowerServerInterceptor) Index() string {
 	return l.index
 }
 
-func NewServerInterceptorLevelRegister(index string) ServerInterceptorLevelRegister {
-	return &HigherServerInterceptorLevel{
-		ServerInterceptorLevel: NewServerInterceptorLevel(index),
-		sublevels:              make(map[string]ServerInterceptorLevel),
+// NewServerInterceptorRegister initializes a `ServerInterceptorRegister` with
+// an empty register and `index` as index as its index.
+func NewServerInterceptorRegister(index string) ServerInterceptorRegister {
+	return &higherServerInterceptorLevel{
+		ServerInterceptor: NewServerInterceptor(index),
+		sublevels:         make(map[string]ServerInterceptor),
 	}
 }
 
-func (l HigherServerInterceptorLevel) Get(key string) (ServerInterceptorLevel, bool) {
+// Get returns the `ServerInterceptor` registered at the index `key`. If nothing
+// is found, it returns (nil, false).
+func (l higherServerInterceptorLevel) Get(key string) (interceptor ServerInterceptor, exists bool) {
 	sub, exists := l.sublevels[key]
 	return sub, exists
 }
 
-func (l *HigherServerInterceptorLevel) AddSubLevel(level ServerInterceptorLevel) {
+// Register registers `level` indexing it by calling its method `Index`.
+// It overwrites any interceptor that has already been registered at this index.
+func (l *higherServerInterceptorLevel) Register(level ServerInterceptor) {
 	l.sublevels[level.Index()] = level
 }
