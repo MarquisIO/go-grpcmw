@@ -57,19 +57,19 @@ import (
 )
 {{if .DefineRouter}}{{template "router" .}}{{end}}
 {{range .Services}}
-func (r *{{.Package}}ServerRouter) AddUnaryInterceptorToService{{.Service}}(interceptor ...grpc.StreamServerInterceptor) error {
+func (r *{{.Package}}ServerRouter) AddUnaryInterceptorToService{{.Service}}(interceptor ...grpc.UnaryServerInterceptor) error {
 	return r.AddStreamServerInterceptor("/{{.Package}}.{{.Service}}", interceptor...)
 }
 
-func (r *{{.Package}}ServerRouter) AddStreamInterceptorToService{{.Service}}(interceptor ...grpc.UnaryServerInterceptor) error {
+func (r *{{.Package}}ServerRouter) AddStreamInterceptorToService{{.Service}}(interceptor ...grpc.StreamServerInterceptor) error {
 	return r.AddUnaryServerInterceptor("/{{.Package}}.{{.Service}}", interceptor...)
 }
 
-func (r *{{.Package}}ClientRouter) AddUnaryInterceptorToService{{.Service}}(interceptor ...grpc.StreamClientInterceptor) error {
+func (r *{{.Package}}ClientRouter) AddUnaryInterceptorToService{{.Service}}(interceptor ...grpc.UnaryClientInterceptor) error {
 	return r.AddStreamClientInterceptor("/{{.Package}}.{{.Service}}", interceptor...)
 }
 
-func (r *{{.Package}}ClientRouter) AddStreamInterceptorToService{{.Service}}(interceptor ...grpc.UnaryClientInterceptor) error {
+func (r *{{.Package}}ClientRouter) AddStreamInterceptorToService{{.Service}}(interceptor ...grpc.StreamClientInterceptor) error {
 	return r.AddUnaryClientInterceptor("/{{.Package}}.{{.Service}}", interceptor...)
 }
 {{range .Methods}}{{if .ServerStream}}
