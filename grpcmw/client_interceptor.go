@@ -10,18 +10,18 @@ import (
 // return a stream. It allows chaining of `grpc.StreamClientInterceptor`
 // and other `StreamClientInterceptor`.
 type StreamClientInterceptor interface {
-	StreamInterceptor() grpc.StreamClientInterceptor
-	AddGRPCStreamInterceptor(i ...grpc.StreamClientInterceptor) StreamClientInterceptor
-	AddStreamInterceptor(i ...StreamClientInterceptor) StreamClientInterceptor
+	Interceptor() grpc.StreamClientInterceptor
+	AddGRPCInterceptor(i ...grpc.StreamClientInterceptor) StreamClientInterceptor
+	AddInterceptor(i ...StreamClientInterceptor) StreamClientInterceptor
 }
 
 // UnaryClientInterceptor represents a client interceptor for gRPC methods that
 // return a single value instead of a stream. It allows chaining of
 // `grpc.UnaryClientInterceptor` and other `UnaryClientInterceptor`.
 type UnaryClientInterceptor interface {
-	UnaryInterceptor() grpc.UnaryClientInterceptor
-	AddGRPCUnaryInterceptor(i ...grpc.UnaryClientInterceptor) UnaryClientInterceptor
-	AddUnaryInterceptor(i ...UnaryClientInterceptor) UnaryClientInterceptor
+	Interceptor() grpc.UnaryClientInterceptor
+	AddGRPCInterceptor(i ...grpc.UnaryClientInterceptor) UnaryClientInterceptor
+	AddInterceptor(i ...UnaryClientInterceptor) UnaryClientInterceptor
 }
 
 type streamClientInterceptor struct {
@@ -46,12 +46,12 @@ func chainStreamClientInterceptor(current grpc.StreamClientInterceptor, next grp
 	}
 }
 
-// StreamInterceptor chains all added interceptors into a single
+// Interceptor chains all added interceptors into a single
 // `grpc.StreamClientInterceptor`.
 //
 // The `streamer` passed to each interceptor is either the next interceptor or,
 // for the last element of the chain, the target method.
-func (si streamClientInterceptor) StreamInterceptor() grpc.StreamClientInterceptor {
+func (si streamClientInterceptor) Interceptor() grpc.StreamClientInterceptor {
 	return func(ctx context.Context, desc *grpc.StreamDesc, cc *grpc.ClientConn, method string, streamer grpc.Streamer, opts ...grpc.CallOption) (grpc.ClientStream, error) {
 		// TODO: Find a more efficient way
 		interceptor := streamer
@@ -62,18 +62,18 @@ func (si streamClientInterceptor) StreamInterceptor() grpc.StreamClientIntercept
 	}
 }
 
-// AddGRPCStreamInterceptor adds `arr` to the chain of interceptors.
-func (si *streamClientInterceptor) AddGRPCStreamInterceptor(arr ...grpc.StreamClientInterceptor) StreamClientInterceptor {
+// AddGRPCInterceptor adds `arr` to the chain of interceptors.
+func (si *streamClientInterceptor) AddGRPCInterceptor(arr ...grpc.StreamClientInterceptor) StreamClientInterceptor {
 	si.interceptors = append(si.interceptors, arr...)
 	return si
 }
 
-// AddStreamInterceptor is a convenient way for adding `StreamClientInterceptor`
+// AddInterceptor is a convenient way for adding `StreamClientInterceptor`
 // to the chain of interceptors. It only calls the method `StreamInterceptor`
 // for each of them and append the return value to the chain.
-func (si *streamClientInterceptor) AddStreamInterceptor(arr ...StreamClientInterceptor) StreamClientInterceptor {
+func (si *streamClientInterceptor) AddInterceptor(arr ...StreamClientInterceptor) StreamClientInterceptor {
 	for _, i := range arr {
-		si.interceptors = append(si.interceptors, i.StreamInterceptor())
+		si.interceptors = append(si.interceptors, i.Interceptor())
 	}
 	return si
 }
@@ -92,12 +92,12 @@ func chainUnaryClientInterceptor(current grpc.UnaryClientInterceptor, next grpc.
 	}
 }
 
-// UnaryInterceptor chains all added interceptors into a single
+// Interceptor chains all added interceptors into a single
 // `grpc.UnaryClientInterceptor`.
 //
 // The `streamer` passed to each interceptor is either the next interceptor or,
 // for the last element of the chain, the target method.
-func (ui *unaryClientInterceptor) UnaryInterceptor() grpc.UnaryClientInterceptor {
+func (ui *unaryClientInterceptor) Interceptor() grpc.UnaryClientInterceptor {
 	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
 		// TODO: Find a more efficient way
 		interceptor := invoker
@@ -108,18 +108,18 @@ func (ui *unaryClientInterceptor) UnaryInterceptor() grpc.UnaryClientInterceptor
 	}
 }
 
-// AddGRPCUnaryInterceptor adds `arr` to the chain of interceptors.
-func (ui *unaryClientInterceptor) AddGRPCUnaryInterceptor(arr ...grpc.UnaryClientInterceptor) UnaryClientInterceptor {
+// AddGRPCInterceptor adds `arr` to the chain of interceptors.
+func (ui *unaryClientInterceptor) AddGRPCInterceptor(arr ...grpc.UnaryClientInterceptor) UnaryClientInterceptor {
 	ui.interceptors = append(ui.interceptors, arr...)
 	return ui
 }
 
-// AddUnaryInterceptor is a convenient way for adding `UnaryClientInterceptor`
+// AddInterceptor is a convenient way for adding `UnaryClientInterceptor`
 // to the chain of interceptors. It only calls the method `UnaryInterceptor`
 // for each of them and append the return value to the chain.
-func (ui *unaryClientInterceptor) AddUnaryInterceptor(arr ...UnaryClientInterceptor) UnaryClientInterceptor {
+func (ui *unaryClientInterceptor) AddInterceptor(arr ...UnaryClientInterceptor) UnaryClientInterceptor {
 	for _, i := range arr {
-		ui.interceptors = append(ui.interceptors, i.UnaryInterceptor())
+		ui.interceptors = append(ui.interceptors, i.Interceptor())
 	}
 	return ui
 }
