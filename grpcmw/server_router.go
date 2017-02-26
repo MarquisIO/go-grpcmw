@@ -72,6 +72,7 @@ func resolveServerInterceptorRec(pathTokens []string, lvl ServerInterceptor, cb 
 }
 
 func resolveServerInterceptor(route string, lvl ServerInterceptor, cb func(lvl ServerInterceptor), force bool) (ServerInterceptor, error) {
+	// TODO: Find a more efficient way to resolve the route
 	matchs := routeRegexp.FindStringSubmatch(route)
 	if len(matchs) == 0 {
 		return nil, errors.New("Invalid route")
@@ -89,6 +90,7 @@ func resolveServerInterceptor(route string, lvl ServerInterceptor, cb func(lvl S
 // of the request through the four levels of middlewares and imbricates them.
 func (r *serverRouter) UnaryResolver() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		// TODO: Find a more efficient way to chain the interceptors
 		interceptor := NewUnaryServerInterceptor()
 		_, err := resolveServerInterceptor(info.FullMethod, r.ServerInterceptorRegister, func(lvl ServerInterceptor) {
 			interceptor.AddUnaryInterceptor(lvl)
@@ -105,6 +107,7 @@ func (r *serverRouter) UnaryResolver() grpc.UnaryServerInterceptor {
 // them.
 func (r *serverRouter) StreamResolver() grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		// TODO: Find a more efficient way to chain the interceptors
 		interceptor := NewStreamServerInterceptor()
 		_, err := resolveServerInterceptor(info.FullMethod, r.ServerInterceptorRegister, func(lvl ServerInterceptor) {
 			interceptor.AddStreamInterceptor(lvl)
