@@ -19,11 +19,11 @@ type generator struct{}
 const routerCode = `import grpcmw "github.com/MarquisIO/BKND-gRPCMiddleware/grpcmw"
 
 type {{.Package}}ServerRouter struct {
-	grpcmw.ServerRouter
+	router grpcmw.ServerRouter
 }
 
 type {{.Package}}ClientRouter struct {
-	grpcmw.ClientRouter
+	router grpcmw.ClientRouter
 }
 
 func GetServerRouter(r grpcmw.ServerRouter) *{{.Package}}ServerRouter {
@@ -31,11 +31,11 @@ func GetServerRouter(r grpcmw.ServerRouter) *{{.Package}}ServerRouter {
 }
 
 func (r *{{.Package}}ServerRouter) AddUnaryInterceptorToPackage(interceptor ...grpc.UnaryServerInterceptor) error {
-	return r.AddUnaryServerInterceptor("/{{.Package}}", interceptor...)
+	return r.router.AddUnaryServerInterceptor("/{{.Package}}", interceptor...)
 }
 
 func (r *{{.Package}}ServerRouter) AddStreamInterceptorToPackage(interceptor ...grpc.StreamServerInterceptor) error {
-	return r.AddStreamServerInterceptor("/{{.Package}}", interceptor...)
+	return r.router.AddStreamServerInterceptor("/{{.Package}}", interceptor...)
 }
 
 func GetClientRouter(r grpcmw.ClientRouter) *{{.Package}}ClientRouter {
@@ -43,50 +43,48 @@ func GetClientRouter(r grpcmw.ClientRouter) *{{.Package}}ClientRouter {
 }
 
 func (r *{{.Package}}ClientRouter) AddUnaryInterceptorToPackage(interceptor ...grpc.UnaryClientInterceptor) error {
-	return r.AddUnaryClientInterceptor("/{{.Package}}", interceptor...)
+	return r.router.AddUnaryClientInterceptor("/{{.Package}}", interceptor...)
 }
 
 func (r *{{.Package}}ClientRouter) AddStreamInterceptorToPackage(interceptor ...grpc.StreamClientInterceptor) error {
-	return r.AddStreamClientInterceptor("/{{.Package}}", interceptor...)
+	return r.router.AddStreamClientInterceptor("/{{.Package}}", interceptor...)
 }`
 
 const pkgCode = `package {{.Package}}
 
-import (
-	grpc "google.golang.org/grpc"
-)
+import grpc "google.golang.org/grpc"
 {{if .DefineRouter}}{{template "router" .}}{{end}}
 {{range .Services}}
 func (r *{{.Package}}ServerRouter) AddUnaryInterceptorToService{{.Service}}(interceptor ...grpc.UnaryServerInterceptor) error {
-	return r.AddStreamServerInterceptor("/{{.Package}}.{{.Service}}", interceptor...)
+	return r.router.AddUnaryServerInterceptor("/{{.Package}}.{{.Service}}", interceptor...)
 }
 
 func (r *{{.Package}}ServerRouter) AddStreamInterceptorToService{{.Service}}(interceptor ...grpc.StreamServerInterceptor) error {
-	return r.AddUnaryServerInterceptor("/{{.Package}}.{{.Service}}", interceptor...)
+	return r.router.AddStreamServerInterceptor("/{{.Package}}.{{.Service}}", interceptor...)
 }
 
 func (r *{{.Package}}ClientRouter) AddUnaryInterceptorToService{{.Service}}(interceptor ...grpc.UnaryClientInterceptor) error {
-	return r.AddStreamClientInterceptor("/{{.Package}}.{{.Service}}", interceptor...)
+	return r.router.AddUnaryClientInterceptor("/{{.Package}}.{{.Service}}", interceptor...)
 }
 
 func (r *{{.Package}}ClientRouter) AddStreamInterceptorToService{{.Service}}(interceptor ...grpc.StreamClientInterceptor) error {
-	return r.AddUnaryClientInterceptor("/{{.Package}}.{{.Service}}", interceptor...)
+	return r.router.AddStreamClientInterceptor("/{{.Package}}.{{.Service}}", interceptor...)
 }
 {{range .Methods}}{{if .ServerStream}}
 func (r *{{.Package}}ServerRouter) AddInterceptorToMethod{{.Method}}(interceptor ...grpc.StreamServerInterceptor) error {
-	return r.AddStreamServerInterceptor("/{{.Package}}.{{.Service}}/{{.Method}}", interceptor...)
+	return r.router.AddStreamServerInterceptor("/{{.Package}}.{{.Service}}/{{.Method}}", interceptor...)
 }
 {{else}}
 func (r *{{.Package}}ServerRouter) AddInterceptorToMethod{{.Method}}(interceptor ...grpc.UnaryServerInterceptor) error {
-	return r.AddUnaryServerInterceptor("/{{.Package}}.{{.Service}}/{{.Method}}", interceptor...)
+	return r.router.AddUnaryServerInterceptor("/{{.Package}}.{{.Service}}/{{.Method}}", interceptor...)
 }
 {{end}}{{if .ClientStream}}
 func (r *{{.Package}}ClientRouter) AddInterceptorToMethod{{.Method}}(interceptor ...grpc.StreamClientInterceptor) error {
-	return r.AddStreamClientInterceptor("/{{.Package}}.{{.Service}}/{{.Method}}", interceptor...)
+	return r.router.AddStreamClientInterceptor("/{{.Package}}.{{.Service}}/{{.Method}}", interceptor...)
 }
 {{else}}
 func (r *{{.Package}}ClientRouter) AddInterceptorToMethod{{.Method}}(interceptor ...grpc.UnaryClientInterceptor) error {
-	return r.AddUnaryClientInterceptor("/{{.Package}}.{{.Service}}/{{.Method}}", interceptor...)
+	return r.router.AddUnaryClientInterceptor("/{{.Package}}.{{.Service}}/{{.Method}}", interceptor...)
 }
 {{end}}{{end}}{{end}}`
 
