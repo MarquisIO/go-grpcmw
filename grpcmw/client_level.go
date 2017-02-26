@@ -1,11 +1,17 @@
 package grpcmw
 
-// ClientInterceptor represent a client interceptor that exposes both
+import "google.golang.org/grpc"
+
+// ClientInterceptor represent a client interceptor that uses both
 // `UnaryClientInterceptor` and `StreamClientInterceptor` and that can be
 // indexed.
 type ClientInterceptor interface {
-	UnaryClientInterceptor
-	StreamClientInterceptor
+	AddGRPCUnaryInterceptor(i ...grpc.UnaryClientInterceptor) ClientInterceptor
+	AddUnaryInterceptor(i ...UnaryClientInterceptor) ClientInterceptor
+	UnaryClientInterceptor() UnaryClientInterceptor
+	AddGRPCStreamInterceptor(i ...grpc.StreamClientInterceptor) ClientInterceptor
+	AddStreamInterceptor(i ...StreamClientInterceptor) ClientInterceptor
+	StreamClientInterceptor() StreamClientInterceptor
 	Index() string
 }
 
@@ -19,9 +25,9 @@ type ClientInterceptorRegister interface {
 }
 
 type lowerClientInterceptor struct {
-	UnaryClientInterceptor
-	StreamClientInterceptor
-	index string
+	unaries UnaryClientInterceptor
+	streams StreamClientInterceptor
+	index   string
 }
 
 type higherClientInterceptorLevel struct {
@@ -30,18 +36,63 @@ type higherClientInterceptorLevel struct {
 }
 
 // NewClientInterceptor initializes a new `ClientInterceptor` with `index`
-// as its index.
+// as its index. It initializes the underlying `UnaryClientInterceptor` and
+// `StreamClientInterceptor`
 func NewClientInterceptor(index string) ClientInterceptor {
 	return &lowerClientInterceptor{
-		UnaryClientInterceptor:  NewUnaryClientInterceptor(),
-		StreamClientInterceptor: NewStreamClientInterceptor(),
-		index: index,
+		unaries: NewUnaryClientInterceptor(),
+		streams: NewStreamClientInterceptor(),
+		index:   index,
 	}
 }
 
 // Index returns the index of the `ClientInterceptor`.
 func (l lowerClientInterceptor) Index() string {
 	return l.index
+}
+
+// AddGRPCUnaryInterceptor calls `AddGRPCInterceptor` of the underlying
+// `UnaryClientInterceptor`. It returns the current instance of
+// `ClientInterceptor` to allow chaining.
+func (l *lowerClientInterceptor) AddGRPCUnaryInterceptor(arr ...grpc.UnaryClientInterceptor) ClientInterceptor {
+	l.unaries.AddGRPCInterceptor(arr...)
+	return l
+}
+
+// AddUnaryInterceptor calls `AddInterceptor` of the underlying
+// `UnaryClientInterceptor`. It returns the current instance of
+// `ClientInterceptor` to allow chaining.
+func (l *lowerClientInterceptor) AddUnaryInterceptor(arr ...UnaryClientInterceptor) ClientInterceptor {
+	l.unaries.AddInterceptor(arr...)
+	return l
+}
+
+// UnaryClientInterceptor returns the underlying instance of
+// `UnaryClientInterceptor`.
+func (l *lowerClientInterceptor) UnaryClientInterceptor() UnaryClientInterceptor {
+	return l.unaries
+}
+
+// AddGRPCStreamInterceptor calls `AddGRPCInterceptor` of the underlying
+// `StreamClientInterceptor`. It returns the current instance of
+// `ClientInterceptor` to allow chaining.
+func (l *lowerClientInterceptor) AddGRPCStreamInterceptor(arr ...grpc.StreamClientInterceptor) ClientInterceptor {
+	l.streams.AddGRPCInterceptor(arr...)
+	return l
+}
+
+// AddStreamInterceptor calls `AddGRPCInterceptor` of the underlying
+// `StreamClientInterceptor`. It returns the current instance of
+// `ClientInterceptor` to allow chaining.
+func (l *lowerClientInterceptor) AddStreamInterceptor(arr ...StreamClientInterceptor) ClientInterceptor {
+	l.streams.AddInterceptor(arr...)
+	return l
+}
+
+// StreamClientInterceptor returns the underlying instance of
+// `StreamClientInterceptor`.
+func (l *lowerClientInterceptor) StreamClientInterceptor() StreamClientInterceptor {
+	return l.streams
 }
 
 // NewClientInterceptorRegister initializes a `ClientInterceptorRegister` with

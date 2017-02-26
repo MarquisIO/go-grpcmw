@@ -10,18 +10,16 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-// ServerRouter represents a server router which allows to add interceptors to
-// routes, resolve these latter and use the appropriate chain of interceptors.
+// ServerRouter represents a server router which allows to resolve routes from a
+// middleware register and use the appropriate chain of interceptors.
 type ServerRouter interface {
-	ServerInterceptorRegister
+	GetRegister() ServerInterceptorRegister
 	UnaryResolver() grpc.UnaryServerInterceptor
 	StreamResolver() grpc.StreamServerInterceptor
-	AddUnaryServerInterceptor(route string, interceptor ...grpc.UnaryServerInterceptor) error
-	AddStreamServerInterceptor(route string, interceptor ...grpc.StreamServerInterceptor) error
 }
 
 type serverRouter struct {
-	ServerInterceptorRegister
+	interceptors ServerInterceptorRegister
 }
 
 // NewServerRouter initializes a `ServerRouter`.
@@ -40,7 +38,7 @@ type serverRouter struct {
 //   specific method.
 func NewServerRouter() ServerRouter {
 	return &serverRouter{
-		ServerInterceptorRegister: NewServerInterceptorRegister("global"),
+		interceptors: NewServerInterceptorRegister("global"),
 	}
 }
 
@@ -72,6 +70,7 @@ func resolveServerInterceptorRec(pathTokens []string, lvl ServerInterceptor, cb 
 }
 
 func resolveServerInterceptor(route string, lvl ServerInterceptor, cb func(lvl ServerInterceptor), force bool) (ServerInterceptor, error) {
+	// TODO: Find a more efficient way to resolve the route
 	matchs := routeRegexp.FindStringSubmatch(route)
 	if len(matchs) == 0 {
 		return nil, errors.New("Invalid route")
@@ -89,14 +88,15 @@ func resolveServerInterceptor(route string, lvl ServerInterceptor, cb func(lvl S
 // of the request through the four levels of middlewares and imbricates them.
 func (r *serverRouter) UnaryResolver() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		// TODO: Find a more efficient way to chain the interceptors
 		interceptor := NewUnaryServerInterceptor()
-		_, err := resolveServerInterceptor(info.FullMethod, r.ServerInterceptorRegister, func(lvl ServerInterceptor) {
-			interceptor.AddUnaryInterceptor(lvl)
+		_, err := resolveServerInterceptor(info.FullMethod, r.interceptors, func(lvl ServerInterceptor) {
+			interceptor.AddInterceptor(lvl.UnaryServerInterceptor())
 		}, false)
 		if err != nil {
 			return nil, grpc.Errorf(codes.Internal, err.Error())
 		}
-		return interceptor.UnaryInterceptor()(ctx, req, info, handler)
+		return interceptor.Interceptor()(ctx, req, info, handler)
 	}
 }
 
@@ -105,41 +105,20 @@ func (r *serverRouter) UnaryResolver() grpc.UnaryServerInterceptor {
 // them.
 func (r *serverRouter) StreamResolver() grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
+		// TODO: Find a more efficient way to chain the interceptors
 		interceptor := NewStreamServerInterceptor()
-		_, err := resolveServerInterceptor(info.FullMethod, r.ServerInterceptorRegister, func(lvl ServerInterceptor) {
-			interceptor.AddStreamInterceptor(lvl)
+		_, err := resolveServerInterceptor(info.FullMethod, r.interceptors, func(lvl ServerInterceptor) {
+			interceptor.AddInterceptor(lvl.StreamServerInterceptor())
 		}, false)
 		if err != nil {
 			return grpc.Errorf(codes.Internal, err.Error())
 		}
-		return interceptor.StreamInterceptor()(srv, ss, info, handler)
+		return interceptor.Interceptor()(srv, ss, info, handler)
 	}
 }
 
-// AddUnaryServerInterceptor parses the given route to get the right level and
-// adds the `interceptors` to it. The route should be of the following format:
-// - for the package level: /package
-// - for the service level: /package.service
-// - for the method level: /package.service/method
-func (r *serverRouter) AddUnaryServerInterceptor(route string, interceptors ...grpc.UnaryServerInterceptor) error {
-	lvl, err := resolveServerInterceptor(route, r.ServerInterceptorRegister, nil, true)
-	if err != nil {
-		return err
-	}
-	lvl.AddGRPCUnaryInterceptor(interceptors...)
-	return nil
-}
-
-// AddStreamServerInterceptor parses the given route to get the right level and
-// adds the `interceptors` to it. The route should be of the following format:
-// - for the package level: /package
-// - for the service level: /package.service
-// - for the method level: /package.service/method
-func (r *serverRouter) AddStreamServerInterceptor(route string, interceptors ...grpc.StreamServerInterceptor) error {
-	lvl, err := resolveServerInterceptor(route, r.ServerInterceptorRegister, nil, true)
-	if err != nil {
-		return err
-	}
-	lvl.AddGRPCStreamInterceptor(interceptors...)
-	return nil
+// GetRegister returns the underlying `ServerInterceptorRegister` which is the
+// global level in the middleware chain.
+func (r *serverRouter) GetRegister() ServerInterceptorRegister {
+	return r.interceptors
 }

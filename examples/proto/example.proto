@@ -4,8 +4,6 @@ package pb;
 
 service Service {
   rpc Method (Message) returns (Message) {}
-	rpc MethodStreamClient (stream Message) returns (Message) {}
-	rpc MethodStreamServer (Message) returns (stream Message) {}
 }
 
 message Message {
