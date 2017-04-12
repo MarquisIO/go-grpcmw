@@ -1,0 +1,21 @@
+syntax = "proto2";
+
+import "google/protobuf/descriptor.proto";
+
+package grpcmw;
+
+extend google.protobuf.FileOptions {
+  optional Interceptors package_interceptors = 56780;
+}
+
+extend google.protobuf.ServiceOptions {
+  optional Interceptors service_interceptors = 56781;
+}
+
+extend google.protobuf.MethodOptions {
+  optional Interceptors method_interceptors = 56782;
+}
+
+message Interceptors {
+  repeated string symbols = 1;
+}
