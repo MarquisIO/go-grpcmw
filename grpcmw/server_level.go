@@ -1,6 +1,10 @@
 package grpcmw
 
-import "google.golang.org/grpc"
+import (
+	"sync"
+
+	"google.golang.org/grpc"
+)
 
 // ServerInterceptor represent a server interceptor that uses both
 // `UnaryServerInterceptor` and `StreamServerInterceptor` and that can be
@@ -33,6 +37,7 @@ type lowerServerInterceptor struct {
 type higherServerInterceptorLevel struct {
 	ServerInterceptor
 	sublevels map[string]ServerInterceptor
+	lock      *sync.RWMutex
 }
 
 // NewServerInterceptor initializes a new `ServerInterceptor` with `index`
@@ -97,22 +102,28 @@ func (l *lowerServerInterceptor) StreamServerInterceptor() StreamServerIntercept
 
 // NewServerInterceptorRegister initializes a `ServerInterceptorRegister` with
 // an empty register and `index` as index as its index.
+// This implementation is thread-safe.
 func NewServerInterceptorRegister(index string) ServerInterceptorRegister {
 	return &higherServerInterceptorLevel{
 		ServerInterceptor: NewServerInterceptor(index),
 		sublevels:         make(map[string]ServerInterceptor),
+		lock:              &sync.RWMutex{},
 	}
 }
 
 // Get returns the `ServerInterceptor` registered at the index `key`. If nothing
 // is found, it returns (nil, false).
 func (l higherServerInterceptorLevel) Get(key string) (interceptor ServerInterceptor, exists bool) {
-	sub, exists := l.sublevels[key]
-	return sub, exists
+	l.lock.RLock()
+	defer l.lock.RUnlock()
+	interceptor, exists = l.sublevels[key]
+	return
 }
 
 // Register registers `level` indexing it by calling its method `Index`.
 // It overwrites any interceptor that has already been registered at this index.
 func (l *higherServerInterceptorLevel) Register(level ServerInterceptor) {
+	l.lock.Lock()
+	defer l.lock.Unlock()
 	l.sublevels[level.Index()] = level
 }
