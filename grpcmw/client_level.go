@@ -16,6 +16,7 @@ type ClientInterceptor interface {
 	AddGRPCStreamInterceptor(i ...grpc.StreamClientInterceptor) ClientInterceptor
 	AddStreamInterceptor(i ...StreamClientInterceptor) ClientInterceptor
 	StreamClientInterceptor() StreamClientInterceptor
+	Merge(i ...ClientInterceptor) ClientInterceptor
 	Index() string
 }
 
@@ -98,6 +99,15 @@ func (l *lowerClientInterceptor) AddStreamInterceptor(arr ...StreamClientInterce
 // `StreamClientInterceptor`.
 func (l *lowerClientInterceptor) StreamClientInterceptor() StreamClientInterceptor {
 	return l.streams
+}
+
+// Merge merges the given interceptors with the current interceptor.
+func (l *lowerClientInterceptor) Merge(interceptors ...ClientInterceptor) ClientInterceptor {
+	for _, interceptor := range interceptors {
+		l.AddUnaryInterceptor(interceptor.UnaryClientInterceptor()).
+			AddStreamInterceptor(interceptor.StreamClientInterceptor())
+	}
+	return l
 }
 
 // NewClientInterceptorRegister initializes a `ClientInterceptorRegister` with
