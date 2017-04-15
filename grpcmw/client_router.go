@@ -51,7 +51,7 @@ func resolveClientInterceptorRec(pathTokens []string, lvl ClientInterceptor, cb 
 	}
 	reg, ok := lvl.(ClientInterceptorRegister)
 	if !ok {
-		return nil, fmt.Errorf("Level %s do not implement grpcmw.ClientInterceptorRegister", lvl.Index())
+		return nil, fmt.Errorf("Level %s does not implement grpcmw.ClientInterceptorRegister", lvl.Index())
 	}
 	sub, exists := reg.Get(pathTokens[0])
 	if !exists {
@@ -75,13 +75,7 @@ func resolveClientInterceptor(route string, lvl ClientInterceptor, cb func(lvl C
 	if len(matchs) == 0 {
 		return nil, errors.New("Invalid route")
 	}
-	tokens := matchs[1:4]
-	if len(matchs[4]) > 0 {
-		tokens[1] = matchs[4]
-	} else if len(matchs[5]) > 0 {
-		tokens[0] = matchs[5]
-	}
-	return resolveClientInterceptorRec(tokens, lvl, cb, force)
+	return resolveClientInterceptorRec(matchs[1:], lvl, cb, force)
 }
 
 // UnaryResolver returns a `grpc.UnaryClientInterceptor` that resolves the route
