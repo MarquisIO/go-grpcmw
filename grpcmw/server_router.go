@@ -36,13 +36,13 @@ type serverRouter struct {
 //
 // Based on this format, this implementation splits the interceptors into four
 // levels:
-// - the global level: these are the interceptors called at each request.
-// - the package level: these are the interceptors called at each request to a
-//   service from the corresponding package.
-// - the service level: these are the interceptors called at each request to a
-//   method from the corresponding service.
-// - the method level: these are the interceptors called at each request to the
-//   specific method.
+//   - the global level: these are the interceptors called at each request.
+//   - the package level: these are the interceptors called at each request to a
+//     service from the corresponding package.
+//   - the service level: these are the interceptors called at each request to a
+//     method from the corresponding service.
+//   - the method level: these are the interceptors called at each request to the
+//     specific method.
 func NewServerRouter() ServerRouter {
 	return &serverRouter{
 		interceptors: NewServerInterceptorRegister("global"),
