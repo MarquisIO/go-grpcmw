@@ -15,6 +15,8 @@ import (
 type ServerRouter interface {
 	// GetRegister returns the interceptor register of the router.
 	GetRegister() ServerInterceptorRegister
+	// SetRegister sets the interceptor register of the router.
+	SetRegister(reg ServerInterceptorRegister)
 	// UnaryResolver returns a `grpc.UnaryServerInterceptor` that uses the
 	// appropriate chain of interceptors with the given unary gRPC request.
 	UnaryResolver() grpc.UnaryServerInterceptor
@@ -119,4 +121,9 @@ func (r *serverRouter) StreamResolver() grpc.StreamServerInterceptor {
 // global level in the interceptor chain.
 func (r *serverRouter) GetRegister() ServerInterceptorRegister {
 	return r.interceptors
+}
+
+// SetRegister sets the interceptor register of the router.
+func (r *serverRouter) SetRegister(reg ServerInterceptorRegister) {
+	r.interceptors = reg
 }
