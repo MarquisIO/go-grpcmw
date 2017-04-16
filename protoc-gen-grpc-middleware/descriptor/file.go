@@ -5,6 +5,7 @@ import (
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 )
 
+// File represents a protobuf file.
 type File struct {
 	Package      string
 	Name         string
@@ -12,6 +13,9 @@ type File struct {
 	Interceptors *Interceptors
 }
 
+// GetFile parses `pb` and builds a `File` object from it.
+// If the file does not define any service nor any interceptor option, it does
+// not return anything.
 func GetFile(pb *descriptor.FileDescriptorProto) (f *File, err error) {
 	services := pb.GetService()
 	f = &File{

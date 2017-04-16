@@ -4,6 +4,8 @@ import (
 	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
 )
 
+// Parse parses the given protobuf request into a map of packages (key) and of
+// files information (value).
 func Parse(pb *plugin.CodeGeneratorRequest) (pkgs map[string][]*File, err error) {
 	// TODO: Do this in multiple goroutines
 	pkgs = make(map[string][]*File)

@@ -8,10 +8,13 @@ import (
 	annotations "github.com/MarquisIO/BKND-gRPCMiddleware/proto"
 )
 
+// Interceptors defines interceptors to use.
 type Interceptors struct {
 	Indexes []string
 }
 
+// GetInterceptors extracts the `Interceptors` extension (described by `desc`)
+// from `pb`.
 func GetInterceptors(pb proto.Message, desc *proto.ExtensionDesc) (*Interceptors, error) {
 	if !proto.HasExtension(pb, desc) {
 		return nil, nil

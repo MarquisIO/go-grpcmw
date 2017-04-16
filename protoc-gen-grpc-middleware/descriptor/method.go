@@ -6,6 +6,7 @@ import (
 	annotations "github.com/MarquisIO/BKND-gRPCMiddleware/proto"
 )
 
+// Method represents a method from a grpc service.
 type Method struct {
 	Package      string
 	Service      string
@@ -15,6 +16,7 @@ type Method struct {
 	Interceptors *Interceptors
 }
 
+// GetMethod parses `pb` and builds from it a `Method` object.
 func GetMethod(pb *descriptor.MethodDescriptorProto, service, pkg string) (method *Method, err error) {
 	method = &Method{
 		Package:      pkg,

@@ -5,6 +5,7 @@ import (
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 )
 
+// Service represents a grpc service definition from a protobuf file.
 type Service struct {
 	Package      string
 	Service      string
@@ -12,6 +13,7 @@ type Service struct {
 	Interceptors *Interceptors
 }
 
+// GetService parses `pb` and builds a `Service` object from it.
 func GetService(pb *descriptor.ServiceDescriptorProto, pkg string) (s *Service, err error) {
 	methods := pb.GetMethod()
 	s = &Service{
