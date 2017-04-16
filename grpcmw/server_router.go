@@ -10,11 +10,16 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-// ServerRouter represents a server router which allows to resolve routes from a
-// middleware register and use the appropriate chain of interceptors.
+// ServerRouter represents route resolver that allows to use the appropriate
+// chain of interceptors for a given gRPC request with an interceptor register.
 type ServerRouter interface {
+	// GetRegister returns the interceptor register of the router.
 	GetRegister() ServerInterceptorRegister
+	// UnaryResolver returns a `grpc.UnaryServerInterceptor` that uses the
+	// appropriate chain of interceptors with the given unary gRPC request.
 	UnaryResolver() grpc.UnaryServerInterceptor
+	// StreamResolver returns a `grpc.StreamServerInterceptor` that uses the
+	// appropriate chain of interceptors with the given stream gRPC request.
 	StreamResolver() grpc.StreamServerInterceptor
 }
 
@@ -23,18 +28,18 @@ type serverRouter struct {
 }
 
 // NewServerRouter initializes a `ServerRouter`.
-// This implementation is based on the official route format used by gRPC,
-// which is the following:
-// /package.service/method
+// This implementation is based on the official route format used by gRPC as
+// defined here :
+// https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#appendix-a---grpc-for-protobuf
 //
-// Based on this format, this implementation splits the middlewares into four
+// Based on this format, this implementation splits the interceptors into four
 // levels:
-// - the global level: these are the middlewares called at each request.
-// - the package level: these are the middlewares called at each request to a
+// - the global level: these are the interceptors called at each request.
+// - the package level: these are the interceptors called at each request to a
 //   service from the corresponding package.
-// - the service level: these are the middlewares called at each request to a
+// - the service level: these are the interceptors called at each request to a
 //   method from the corresponding service.
-// - the method level: these are the middlewares called at each request to the
+// - the method level: these are the interceptors called at each request to the
 //   specific method.
 func NewServerRouter() ServerRouter {
 	return &serverRouter{
@@ -78,8 +83,8 @@ func resolveServerInterceptor(route string, lvl ServerInterceptor, cb func(lvl S
 	return resolveServerInterceptorRec(matchs[1:], lvl, cb, force)
 }
 
-// UnaryResolver returns a `grpc.UnaryServerInterceptor` that resolves the route
-// of the request through the four levels of middlewares and imbricates them.
+// UnaryResolver returns a `grpc.UnaryServerInterceptor` that uses the
+// appropriate chain of interceptors with the given gRPC request.
 func (r *serverRouter) UnaryResolver() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		// TODO: Find a more efficient way to chain the interceptors
@@ -94,9 +99,8 @@ func (r *serverRouter) UnaryResolver() grpc.UnaryServerInterceptor {
 	}
 }
 
-// StreamResolver returns a `grpc.StreamServerInterceptor` that resolves the
-// route of the request through the four levels of middlewares and imbricates
-// them.
+// StreamResolver returns a `grpc.StreamServerInterceptor` that uses the
+// appropriate chain of interceptors with the given stream gRPC request.
 func (r *serverRouter) StreamResolver() grpc.StreamServerInterceptor {
 	return func(srv interface{}, ss grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		// TODO: Find a more efficient way to chain the interceptors
@@ -112,7 +116,7 @@ func (r *serverRouter) StreamResolver() grpc.StreamServerInterceptor {
 }
 
 // GetRegister returns the underlying `ServerInterceptorRegister` which is the
-// global level in the middleware chain.
+// global level in the interceptor chain.
 func (r *serverRouter) GetRegister() ServerInterceptorRegister {
 	return r.interceptors
 }

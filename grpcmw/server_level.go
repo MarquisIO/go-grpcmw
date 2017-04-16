@@ -10,13 +10,23 @@ import (
 // `UnaryServerInterceptor` and `StreamServerInterceptor` and that can be
 // indexed.
 type ServerInterceptor interface {
+	// AddGRPCUnaryInterceptor adds given unary interceptors to the chain.
 	AddGRPCUnaryInterceptor(i ...grpc.UnaryServerInterceptor) ServerInterceptor
+	// AddUnaryInterceptor is a convenient way for adding `UnaryServerInterceptor`
+	// to the chain of unary interceptors.
 	AddUnaryInterceptor(i ...UnaryServerInterceptor) ServerInterceptor
+	// UnaryServerInterceptor returns the chain of unary interceptors.
 	UnaryServerInterceptor() UnaryServerInterceptor
+	// AddGRPCStreamInterceptor adds given stream interceptors to the chain.
 	AddGRPCStreamInterceptor(i ...grpc.StreamServerInterceptor) ServerInterceptor
+	// AddStreamInterceptor is a convenient way for adding
+	// `StreamServerInterceptor` to the chain of stream interceptors.
 	AddStreamInterceptor(i ...StreamServerInterceptor) ServerInterceptor
+	// StreamServerInterceptor returns the chain of stream interceptors.
 	StreamServerInterceptor() StreamServerInterceptor
+	// Merge merges the given interceptors with the current interceptor.
 	Merge(interceptors ...ServerInterceptor) ServerInterceptor
+	// Index returns the index of the `ServerInterceptor`.
 	Index() string
 }
 
@@ -25,7 +35,10 @@ type ServerInterceptor interface {
 // It also implements `ServerInterceptor`.
 type ServerInterceptorRegister interface {
 	ServerInterceptor
+	// Register registers `level` at the index returned by its method `Index`.
 	Register(level ServerInterceptor)
+	// Get returns the `ServerInterceptor` registered at the index `key`. If
+	// nothing is found, it returns (nil, false).
 	Get(key string) (ServerInterceptor, bool)
 }
 
@@ -43,7 +56,8 @@ type higherServerInterceptorLevel struct {
 
 // NewServerInterceptor initializes a new `ServerInterceptor` with `index`
 // as its index. It initializes the underlying `UnaryServerInterceptor` and
-// `StreamServerInterceptor`
+// `StreamServerInterceptor`.
+// This implementation is thread-safe.
 func NewServerInterceptor(index string) ServerInterceptor {
 	return &lowerServerInterceptor{
 		unaries: NewUnaryServerInterceptor(),
@@ -130,7 +144,7 @@ func (l higherServerInterceptorLevel) Get(key string) (interceptor ServerInterce
 	return
 }
 
-// Register registers `level` indexing it by calling its method `Index`.
+// Register registers `level` at the index returned by its method `Index`.
 // It overwrites any interceptor that has already been registered at this index.
 func (l *higherServerInterceptorLevel) Register(level ServerInterceptor) {
 	l.lock.Lock()
