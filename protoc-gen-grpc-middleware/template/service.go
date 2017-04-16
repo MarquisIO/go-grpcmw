@@ -28,11 +28,11 @@ func (i *server{{template "pkgType" .}}) Register{{.Service}}() *server{{templat
 			ServerInterceptor: grpcmw.NewServerInterceptorRegister("{{.Service}}"),
 		}
 		i.ServerInterceptor.(grpcmw.ServerInterceptorRegister).Register(ret.ServerInterceptor)
-		{{with .Interceptors}}ret.ServerInterceptor.Merge({{range .Symbols}}
+		{{with .Interceptors}}ret.ServerInterceptor.Merge({{range .Indexes}}
 			registry.GetServerInterceptor("{{.}}"),{{end}}
 		){{end}}
 		{{range .Methods}}{{if .Interceptors}}
-		ret.{{.Method}}().AddInterceptor({{$method := .}}{{range .Interceptors.Symbols}}
+		ret.{{.Method}}().AddInterceptor({{$method := .}}{{range .Interceptors.Indexes}}
 			registry.GetServerInterceptor("{{.}}").{{template "methodType" $method.ServerStream}}ServerInterceptor(),{{end}}
 		){{end}}{{end}}
 		return ret
@@ -49,11 +49,11 @@ func (i *client{{template "pkgType" .}}) Register{{.Service}}() *client{{templat
 			ClientInterceptor: grpcmw.NewClientInterceptorRegister("{{.Service}}"),
 		}
 		i.ClientInterceptor.(grpcmw.ClientInterceptorRegister).Register(ret.ClientInterceptor)
-		{{with .Interceptors}}ret.ClientInterceptor.Merge({{range .Symbols}}
+		{{with .Interceptors}}ret.ClientInterceptor.Merge({{range .Indexes}}
 			registry.GetClientInterceptor("{{.}}"),{{end}}
 		){{end}}
 		{{range .Methods}}{{if .Interceptors}}
-		ret.{{.Method}}().AddInterceptor({{$method := .}}{{range .Interceptors.Symbols}}
+		ret.{{.Method}}().AddInterceptor({{$method := .}}{{range .Interceptors.Indexes}}
 			registry.GetClientInterceptor("{{.}}").{{template "methodType" $method.ClientStream}}ClientInterceptor(),{{end}}
 		){{end}}{{end}}
 		return ret

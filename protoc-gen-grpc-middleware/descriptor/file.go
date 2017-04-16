@@ -29,7 +29,7 @@ func GetFile(pb *descriptor.FileDescriptorProto) (f *File, err error) {
 			return nil, err
 		}
 	}
-	if (f.Interceptors == nil || len(f.Interceptors.Symbols) == 0) && len(f.Services) == 0 {
+	if f.Interceptors == nil && len(f.Services) == 0 {
 		return nil, nil
 	}
 	return

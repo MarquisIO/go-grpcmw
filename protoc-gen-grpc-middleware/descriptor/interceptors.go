@@ -9,7 +9,7 @@ import (
 )
 
 type Interceptors struct {
-	Symbols []string
+	Indexes []string
 }
 
 func GetInterceptors(pb proto.Message, desc *proto.ExtensionDesc) (*Interceptors, error) {
@@ -23,8 +23,10 @@ func GetInterceptors(pb proto.Message, desc *proto.ExtensionDesc) (*Interceptors
 	interceptors, ok := ext.(*annotations.Interceptors)
 	if !ok {
 		return nil, fmt.Errorf("extension is %T; want an Interceptors", ext)
+	} else if len(interceptors.GetIndexes()) == 0 {
+		return nil, nil
 	}
 	return &Interceptors{
-		Symbols: interceptors.GetSymbols(),
+		Indexes: interceptors.GetIndexes(),
 	}, nil
 }

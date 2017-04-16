@@ -10,9 +10,9 @@ const (
 // Code templates
 const (
 	pkgInterceptorsCode = `
-{{if .Symbols}}func init() {
+{{if .Indexes}}func init() {
 	pkgInterceptors = append(
-		pkgInterceptors,{{range .Symbols}}
+		pkgInterceptors,{{range .Indexes}}
 		"{{.}}",{{end}}
 	)
 }{{end}}

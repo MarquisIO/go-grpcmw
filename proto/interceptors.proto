@@ -17,5 +17,5 @@ extend google.protobuf.MethodOptions {
 }
 
 message Interceptors {
-  repeated string symbols = 1;
+  repeated string indexes = 1;
 }

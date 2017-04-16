@@ -5,17 +5,17 @@ import "github.com/MarquisIO/BKND-gRPCMiddleware/proto/interceptors.proto";
 package pb;
 
 option (grpcmw.package_interceptors) = {
-  symbols: ["pkg"]
+  indexes: ["pkg"]
 };
 
 service Service {
   option (grpcmw.service_interceptors) = {
-    symbols: ["srv"]
+    indexes: ["srv"]
   };
 
   rpc Method (Message) returns (Message) {
     option (grpcmw.method_interceptors) = {
-      symbols: ["meth"]
+      indexes: ["meth"]
     };
   }
 }
