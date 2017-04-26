@@ -12,17 +12,27 @@ import (
 // return a stream. It allows chaining of `grpc.StreamServerInterceptor`
 // and other `StreamServerInterceptor`.
 type StreamServerInterceptor interface {
+	// Interceptor chains all added interceptors into a single
+	// `grpc.StreamServerInterceptor`.
 	Interceptor() grpc.StreamServerInterceptor
+	// AddGRPCInterceptor adds given interceptors to the chain.
 	AddGRPCInterceptor(i ...grpc.StreamServerInterceptor) StreamServerInterceptor
+	// AddInterceptor is a convenient way for adding `StreamServerInterceptor`
+	// to the chain of interceptors.
 	AddInterceptor(i ...StreamServerInterceptor) StreamServerInterceptor
 }
 
 // UnaryServerInterceptor represents a server interceptor for gRPC methods that
-// return a single value instead of a stream. It allows chaining of
-// `grpc.UnaryServerInterceptor` and other `UnaryServerInterceptor`.
+// return a single value. It allows chaining of `grpc.UnaryServerInterceptor`
+// and other `UnaryServerInterceptor`.
 type UnaryServerInterceptor interface {
+	// Interceptor chains all added interceptors into a single
+	// `grpc.UnaryServerInterceptor`.
 	Interceptor() grpc.UnaryServerInterceptor
+	// AddGRPCInterceptor adds given interceptors to the chain.
 	AddGRPCInterceptor(i ...grpc.UnaryServerInterceptor) UnaryServerInterceptor
+	// AddInterceptor is a convenient way for adding `UnaryServerInterceptor`
+	// to the chain of interceptors.
 	AddInterceptor(i ...UnaryServerInterceptor) UnaryServerInterceptor
 }
 
@@ -79,7 +89,7 @@ func (si *streamServerInterceptor) AddGRPCInterceptor(arr ...grpc.StreamServerIn
 }
 
 // AddInterceptor is a convenient way for adding `StreamServerInterceptor`
-// to the chain of interceptors. It only calls the method `StreamInterceptor`
+// to the chain of interceptors. It only calls the method `Interceptor`
 // for each of them and append the return value to the chain.
 func (si *streamServerInterceptor) AddInterceptor(arr ...StreamServerInterceptor) StreamServerInterceptor {
 	si.lock.Lock()
@@ -133,7 +143,7 @@ func (ui *unaryServerInterceptor) AddGRPCInterceptor(arr ...grpc.UnaryServerInte
 }
 
 // AddInterceptor is a convenient way for adding `UnaryServerInterceptor`
-// to the chain of interceptors. It only calls the method `UnaryInterceptor`
+// to the chain of interceptors. It only calls the method `Interceptor`
 // for each of them and append the return value to the chain.
 func (ui *unaryServerInterceptor) AddInterceptor(arr ...UnaryServerInterceptor) UnaryServerInterceptor {
 	ui.lock.Lock()

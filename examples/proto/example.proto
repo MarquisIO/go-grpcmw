@@ -1,9 +1,23 @@
 syntax = "proto3";
 
+import "github.com/MarquisIO/BKND-gRPCMiddleware/proto/interceptors.proto";
+
 package pb;
 
+option (grpcmw.package_interceptors) = {
+  indexes: ["pkg"]
+};
+
 service Service {
-  rpc Method (Message) returns (Message) {}
+  option (grpcmw.service_interceptors) = {
+    indexes: ["srv"]
+  };
+
+  rpc Method (Message) returns (Message) {
+    option (grpcmw.method_interceptors) = {
+      indexes: ["meth"]
+    };
+  }
 }
 
 message Message {

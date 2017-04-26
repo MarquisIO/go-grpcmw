@@ -6,16 +6,27 @@ import (
 	"google.golang.org/grpc"
 )
 
-// ClientInterceptor represent a client interceptor that uses both
+// ClientInterceptor represents a client interceptor that uses both
 // `UnaryClientInterceptor` and `StreamClientInterceptor` and that can be
 // indexed.
 type ClientInterceptor interface {
+	// AddGRPCUnaryInterceptor adds given unary interceptors to the chain.
 	AddGRPCUnaryInterceptor(i ...grpc.UnaryClientInterceptor) ClientInterceptor
+	// AddUnaryInterceptor is a convenient way for adding `UnaryClientInterceptor`
+	// to the chain of unary interceptors.
 	AddUnaryInterceptor(i ...UnaryClientInterceptor) ClientInterceptor
+	// UnaryClientInterceptor returns the chain of unary interceptors.
 	UnaryClientInterceptor() UnaryClientInterceptor
+	// AddGRPCStreamInterceptor adds given stream interceptors to the chain.
 	AddGRPCStreamInterceptor(i ...grpc.StreamClientInterceptor) ClientInterceptor
+	// AddStreamInterceptor is a convenient way for adding
+	// `StreamClientInterceptor` to the chain of stream interceptors.
 	AddStreamInterceptor(i ...StreamClientInterceptor) ClientInterceptor
+	// StreamClientInterceptor returns the chain of stream interceptors.
 	StreamClientInterceptor() StreamClientInterceptor
+	// Merge merges the given interceptors with the current interceptor.
+	Merge(i ...ClientInterceptor) ClientInterceptor
+	// Index returns the index of the `ClientInterceptor`.
 	Index() string
 }
 
@@ -24,7 +35,10 @@ type ClientInterceptor interface {
 // It also implements `ClientInterceptor`.
 type ClientInterceptorRegister interface {
 	ClientInterceptor
+	// Register registers `level` at the index returned by its method `Index`.
 	Register(level ClientInterceptor)
+	// Get returns the `ClientInterceptor` registered at the index `key`. If
+	// nothing is found, it returns (nil, false).
 	Get(key string) (ClientInterceptor, bool)
 }
 
@@ -42,7 +56,8 @@ type higherClientInterceptorLevel struct {
 
 // NewClientInterceptor initializes a new `ClientInterceptor` with `index`
 // as its index. It initializes the underlying `UnaryClientInterceptor` and
-// `StreamClientInterceptor`
+// `StreamClientInterceptor`.
+// This implementation is thread-safe.
 func NewClientInterceptor(index string) ClientInterceptor {
 	return &lowerClientInterceptor{
 		unaries: NewUnaryClientInterceptor(),
@@ -100,6 +115,15 @@ func (l *lowerClientInterceptor) StreamClientInterceptor() StreamClientIntercept
 	return l.streams
 }
 
+// Merge merges the given interceptors with the current interceptor.
+func (l *lowerClientInterceptor) Merge(interceptors ...ClientInterceptor) ClientInterceptor {
+	for _, interceptor := range interceptors {
+		l.AddUnaryInterceptor(interceptor.UnaryClientInterceptor()).
+			AddStreamInterceptor(interceptor.StreamClientInterceptor())
+	}
+	return l
+}
+
 // NewClientInterceptorRegister initializes a `ClientInterceptorRegister` with
 // an empty register and `index` as index as its index.
 // This implementation is thread-safe.
@@ -120,7 +144,7 @@ func (l higherClientInterceptorLevel) Get(key string) (interceptor ClientInterce
 	return
 }
 
-// Register registers `level` indexing it by calling its method `Index`.
+// Register registers `level` at the index returned by its method `Index`.
 // It overwrites any interceptor that has already been registered at this index.
 func (l *higherClientInterceptorLevel) Register(level ClientInterceptor) {
 	l.lock.Lock()

@@ -10,8 +10,25 @@ import (
 	"github.com/MarquisIO/BKND-gRPCMiddleware/examples/proto"
 	"github.com/MarquisIO/BKND-gRPCMiddleware/examples/server"
 	"github.com/MarquisIO/BKND-gRPCMiddleware/grpcmw"
+	"github.com/MarquisIO/BKND-gRPCMiddleware/grpcmw/registry"
 	"google.golang.org/grpc"
 )
+
+func serverMiddlewareRegistry(level string) grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+		fmt.Printf("enter server : %s level of middleware (registry)\n", level)
+		defer fmt.Printf("leave server : %s level of middleware (registry)\n", level)
+		return handler(ctx, req)
+	}
+}
+
+func clientMiddlewareRegistry(level string) grpc.UnaryClientInterceptor {
+	return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+		fmt.Printf("enter client : %s level of middleware (registry)\n", level)
+		defer fmt.Printf("leave client : %s level of middleware (registry)\n", level)
+		return invoker(ctx, method, req, reply, cc, opts...)
+	}
+}
 
 func serverMiddleware(level string) grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
@@ -35,10 +52,10 @@ func startServer(port uint16) (*grpc.Server, net.Listener) {
 	r := grpcmw.NewServerRouter()
 	r.GetRegister().AddGRPCUnaryInterceptor(serverMiddleware("global"))
 
-	pkgInterceptors := pb.GetPackageServerInterceptors(r)
+	pkgInterceptors := pb.RegisterServerInterceptors(r)
 	pkgInterceptors.AddGRPCUnaryInterceptor(serverMiddleware("package"))
-	pkgInterceptors.Service().AddGRPCUnaryInterceptor(serverMiddleware("service"))
-	pkgInterceptors.Service().Method().AddGRPCInterceptor(serverMiddleware("method"))
+	pkgInterceptors.RegisterService().AddGRPCUnaryInterceptor(serverMiddleware("service"))
+	pkgInterceptors.RegisterService().Method().AddGRPCInterceptor(serverMiddleware("method"))
 
 	// Create gRPC server and register the service
 	var e serverpb.Example
@@ -60,10 +77,10 @@ func startClient(port uint16) (*grpc.ClientConn, pb.ServiceClient) {
 	r := grpcmw.NewClientRouter()
 	r.GetRegister().AddGRPCUnaryInterceptor(clientMiddleware("global"))
 
-	pkgInterceptors := pb.GetPackageClientInterceptors(r)
+	pkgInterceptors := pb.RegisterClientInterceptors(r)
 	pkgInterceptors.AddGRPCUnaryInterceptor(clientMiddleware("package"))
-	pkgInterceptors.Service().AddGRPCUnaryInterceptor(clientMiddleware("service"))
-	pkgInterceptors.Service().Method().AddGRPCInterceptor(clientMiddleware("method"))
+	pkgInterceptors.RegisterService().AddGRPCUnaryInterceptor(clientMiddleware("service"))
+	pkgInterceptors.RegisterService().Method().AddGRPCInterceptor(clientMiddleware("method"))
 
 	// Setup connection to the server
 	target := fmt.Sprintf("127.0.0.1:%d", port)
@@ -78,6 +95,14 @@ func startClient(port uint16) (*grpc.ClientConn, pb.ServiceClient) {
 
 func main() {
 	var port uint16 = 4242
+
+	// Register middlewares on registry
+	registry.GetClientInterceptor("pkg").AddGRPCUnaryInterceptor(clientMiddlewareRegistry("package"))
+	registry.GetClientInterceptor("srv").AddGRPCUnaryInterceptor(clientMiddlewareRegistry("service"))
+	registry.GetClientInterceptor("meth").AddGRPCUnaryInterceptor(clientMiddlewareRegistry("method"))
+	registry.GetServerInterceptor("pkg").AddGRPCUnaryInterceptor(serverMiddlewareRegistry("package"))
+	registry.GetServerInterceptor("srv").AddGRPCUnaryInterceptor(serverMiddlewareRegistry("service"))
+	registry.GetServerInterceptor("meth").AddGRPCUnaryInterceptor(serverMiddlewareRegistry("method"))
 
 	server, lis := startServer(port)
 	defer lis.Close()

@@ -15,7 +15,7 @@ re: clean all
 
 
 %.pb.go: %.proto
-	$(PROTOC) --go_out=plugins=grpc:. $^
+	$(PROTOC) -I $(GOPATH)/src:. --go_out=plugins=grpc:. $^
 
 %.pb.mw.go: %.proto
-	$(PROTOC) --grpc-middleware_out=:. $^
+	$(PROTOC) -I $(GOPATH)/src:. --grpc-middleware_out=:. $^
