@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "github.com/MarquisIO/BKND-gRPCMiddleware/proto/interceptors.proto";
+import "github.com/MarquisIO/go-grpcmw/proto/interceptors.proto";
 
 package pb;
 

@@ -7,10 +7,10 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/MarquisIO/BKND-gRPCMiddleware/examples/proto"
-	"github.com/MarquisIO/BKND-gRPCMiddleware/examples/server"
-	"github.com/MarquisIO/BKND-gRPCMiddleware/grpcmw"
-	"github.com/MarquisIO/BKND-gRPCMiddleware/grpcmw/registry"
+	"github.com/MarquisIO/go-grpcmw/examples/proto"
+	"github.com/MarquisIO/go-grpcmw/examples/server"
+	"github.com/MarquisIO/go-grpcmw/grpcmw"
+	"github.com/MarquisIO/go-grpcmw/grpcmw/registry"
 	"google.golang.org/grpc"
 )
 
