@@ -17,8 +17,8 @@ const (
 	pkgCode = `package {{.Package}}
 
 import (
-	grpcmw "github.com/MarquisIO/BKND-gRPCMiddleware/grpcmw"
-	registry "github.com/MarquisIO/BKND-gRPCMiddleware/grpcmw/registry"
+	grpcmw "github.com/MarquisIO/go-grpcmw/grpcmw"
+	registry "github.com/MarquisIO/go-grpcmw/grpcmw/registry"
 )
 
 var (

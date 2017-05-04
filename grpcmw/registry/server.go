@@ -3,7 +3,7 @@ package registry
 import (
 	"sync"
 
-	"github.com/MarquisIO/BKND-gRPCMiddleware/grpcmw"
+	"github.com/MarquisIO/go-grpcmw/grpcmw"
 )
 
 var (

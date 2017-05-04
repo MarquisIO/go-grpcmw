@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/MarquisIO/BKND-gRPCMiddleware/protoc-gen-grpc-middleware/descriptor"
+	"github.com/MarquisIO/go-grpcmw/protoc-gen-grpc-middleware/descriptor"
 	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
 )
 
@@ -20,8 +20,8 @@ const (
 	initCode = `package {{.Package}}
 
 import (
-	grpcmw   "github.com/MarquisIO/BKND-gRPCMiddleware/grpcmw"
-	registry "github.com/MarquisIO/BKND-gRPCMiddleware/grpcmw/registry"
+	grpcmw   "github.com/MarquisIO/go-grpcmw/grpcmw"
+	registry "github.com/MarquisIO/go-grpcmw/grpcmw/registry"
 )
 
 type server{{template "pkgType" .}} struct {

@@ -1,7 +1,7 @@
 package descriptor
 
 import (
-	annotations "github.com/MarquisIO/BKND-gRPCMiddleware/proto"
+	annotations "github.com/MarquisIO/go-grpcmw/proto"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 )
 

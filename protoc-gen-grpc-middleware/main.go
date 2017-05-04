@@ -6,8 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/MarquisIO/BKND-gRPCMiddleware/protoc-gen-grpc-middleware/descriptor"
-	"github.com/MarquisIO/BKND-gRPCMiddleware/protoc-gen-grpc-middleware/template"
+	"github.com/MarquisIO/go-grpcmw/protoc-gen-grpc-middleware/descriptor"
+	"github.com/MarquisIO/go-grpcmw/protoc-gen-grpc-middleware/template"
 	"github.com/golang/protobuf/proto"
 	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
 )

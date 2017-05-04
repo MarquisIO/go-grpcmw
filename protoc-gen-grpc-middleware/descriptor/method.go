@@ -3,7 +3,7 @@ package descriptor
 import (
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 
-	annotations "github.com/MarquisIO/BKND-gRPCMiddleware/proto"
+	annotations "github.com/MarquisIO/go-grpcmw/proto"
 )
 
 // Method represents a method from a grpc service.
