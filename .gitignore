@@ -1,4 +1,4 @@
 /examples/proto/*.pb.go
 /examples/proto/*.pb.mw.go
 /examples/examples
-!/proto/*.pb.go
+!/annotations/*.pb.go

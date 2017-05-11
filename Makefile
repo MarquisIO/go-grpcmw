@@ -1,18 +1,18 @@
 EXAMPLES_DIR = examples/
-PROTO_DIR = proto/
+ANNOTATIONS_DIR = annotations/
 
-.PHONY: all proto examples clean
+.PHONY: all annotations examples clean
 
-all: proto examples
+all: annotations examples
 
-proto:
-	@make -C $(PROTO_DIR)
+annotations:
+	@make -C $(ANNOTATIONS_DIR)
 
 examples:
 	@make -C $(EXAMPLES_DIR)
 
 clean:
-	@make clean -C $(PROTO_DIR)
+	@make clean -C $(ANNOTATIONS_DIR)
 	@make clean -C $(EXAMPLES_DIR)
 
 re: clean all

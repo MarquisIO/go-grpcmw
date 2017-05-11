@@ -1,7 +1,7 @@
 package descriptor
 
 import (
-	annotations "github.com/MarquisIO/go-grpcmw/proto"
+	"github.com/MarquisIO/go-grpcmw/annotations"
 	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 )
 
