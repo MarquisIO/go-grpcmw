@@ -5,7 +5,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	annotations "github.com/MarquisIO/go-grpcmw/proto"
+	"github.com/MarquisIO/go-grpcmw/annotations"
 )
 
 // Interceptors defines interceptors to use.

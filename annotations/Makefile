@@ -1,9 +1,11 @@
 PROTOC = protoc
 
-PROTO_SRC = interceptors.proto
+PROTO_SRC = annotations.proto
 PROTO_PB_GO = $(PROTO_SRC:.proto=.pb.go)
 
 DESCRIPTOR = github.com/golang/protobuf/protoc-gen-go/descriptor
+
+GO_PACKAGE = annotations
 
 .PHONY: all clean re
 
@@ -15,4 +17,4 @@ clean:
 re: clean all
 
 %.pb.go: %.proto
-	$(PROTOC) --go_out=Mgoogle/protobuf/descriptor.proto=$(DESCRIPTOR),plugins=grpc:. $^
+	$(PROTOC) --go_out=import_path=$(GO_PACKAGE),Mgoogle/protobuf/descriptor.proto=$(DESCRIPTOR),plugins=grpc:. $^
