@@ -1,3 +1,4 @@
-*.pb.go
-*.pb.mw.go
-examples/examples
+/examples/proto/*.pb.go
+/examples/proto/*.pb.mw.go
+/examples/examples
+!/annotations/*.pb.go

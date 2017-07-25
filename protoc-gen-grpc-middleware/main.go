@@ -6,7 +6,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/MarquisIO/BKND-gRPCMiddleware/protoc-gen-grpc-middleware/generator"
+	"github.com/MarquisIO/go-grpcmw/protoc-gen-grpc-middleware/descriptor"
+	"github.com/MarquisIO/go-grpcmw/protoc-gen-grpc-middleware/template"
 	"github.com/golang/protobuf/proto"
 	plugin "github.com/golang/protobuf/protoc-gen-go/plugin"
 )
@@ -29,13 +30,12 @@ func getResponseFromError(err error) *plugin.CodeGeneratorResponse {
 }
 
 func main() {
-	var (
-		res *plugin.CodeGeneratorResponse
-		g   = generator.New()
-	)
+	var res *plugin.CodeGeneratorResponse
 	if req, err := parseRequest(os.Stdin); err != nil {
 		res = getResponseFromError(err)
-	} else if res, err = g.Generate(req); err != nil {
+	} else if pkgs, err := descriptor.Parse(req); err != nil {
+		res = getResponseFromError(err)
+	} else if res, err = template.Apply(pkgs); err != nil {
 		res = getResponseFromError(err)
 	}
 	if buf, err := proto.Marshal(res); err != nil {

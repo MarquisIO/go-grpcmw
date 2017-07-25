@@ -1,9 +1,23 @@
 syntax = "proto3";
 
+import "github.com/MarquisIO/go-grpcmw/annotations/annotations.proto";
+
 package pb;
 
+option (grpcmw.package_interceptors) = {
+  indexes: ["pkg"]
+};
+
 service Service {
-  rpc Method (Message) returns (Message) {}
+  option (grpcmw.service_interceptors) = {
+    indexes: ["srv"]
+  };
+
+  rpc Method (Message) returns (Message) {
+    option (grpcmw.method_interceptors) = {
+      indexes: ["meth"]
+    };
+  }
 }
 
 message Message {

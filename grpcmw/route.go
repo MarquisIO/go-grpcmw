@@ -3,5 +3,5 @@ package grpcmw
 import "regexp"
 
 var (
-	routeRegexp = regexp.MustCompile("\\/(?:(.+)\\.(?:(.+)\\/(.+)|(.+))|(.+))")
+	routeRegexp = regexp.MustCompile(`\/(?:(.+)\.)?(.+)\/(.+)`)
 )

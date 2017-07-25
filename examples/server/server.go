@@ -5,7 +5,7 @@ import (
 
 	"golang.org/x/net/context"
 
-	"github.com/MarquisIO/BKND-gRPCMiddleware/examples/proto"
+	"github.com/MarquisIO/go-grpcmw/examples/proto"
 )
 
 // Example implements the `pb.Example` service

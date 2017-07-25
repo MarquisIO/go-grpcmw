@@ -1,17 +1,32 @@
 package grpcmw
 
-import "google.golang.org/grpc"
+import (
+	"sync"
+
+	"google.golang.org/grpc"
+)
 
 // ServerInterceptor represent a server interceptor that uses both
 // `UnaryServerInterceptor` and `StreamServerInterceptor` and that can be
 // indexed.
 type ServerInterceptor interface {
+	// AddGRPCUnaryInterceptor adds given unary interceptors to the chain.
 	AddGRPCUnaryInterceptor(i ...grpc.UnaryServerInterceptor) ServerInterceptor
+	// AddUnaryInterceptor is a convenient way for adding `UnaryServerInterceptor`
+	// to the chain of unary interceptors.
 	AddUnaryInterceptor(i ...UnaryServerInterceptor) ServerInterceptor
+	// UnaryServerInterceptor returns the chain of unary interceptors.
 	UnaryServerInterceptor() UnaryServerInterceptor
+	// AddGRPCStreamInterceptor adds given stream interceptors to the chain.
 	AddGRPCStreamInterceptor(i ...grpc.StreamServerInterceptor) ServerInterceptor
+	// AddStreamInterceptor is a convenient way for adding
+	// `StreamServerInterceptor` to the chain of stream interceptors.
 	AddStreamInterceptor(i ...StreamServerInterceptor) ServerInterceptor
+	// StreamServerInterceptor returns the chain of stream interceptors.
 	StreamServerInterceptor() StreamServerInterceptor
+	// Merge merges the given interceptors with the current interceptor.
+	Merge(interceptors ...ServerInterceptor) ServerInterceptor
+	// Index returns the index of the `ServerInterceptor`.
 	Index() string
 }
 
@@ -20,7 +35,10 @@ type ServerInterceptor interface {
 // It also implements `ServerInterceptor`.
 type ServerInterceptorRegister interface {
 	ServerInterceptor
+	// Register registers `level` at the index returned by its method `Index`.
 	Register(level ServerInterceptor)
+	// Get returns the `ServerInterceptor` registered at the index `key`. If
+	// nothing is found, it returns (nil, false).
 	Get(key string) (ServerInterceptor, bool)
 }
 
@@ -33,11 +51,13 @@ type lowerServerInterceptor struct {
 type higherServerInterceptorLevel struct {
 	ServerInterceptor
 	sublevels map[string]ServerInterceptor
+	lock      *sync.RWMutex
 }
 
 // NewServerInterceptor initializes a new `ServerInterceptor` with `index`
 // as its index. It initializes the underlying `UnaryServerInterceptor` and
-// `StreamServerInterceptor`
+// `StreamServerInterceptor`.
+// This implementation is thread-safe.
 func NewServerInterceptor(index string) ServerInterceptor {
 	return &lowerServerInterceptor{
 		unaries: NewUnaryServerInterceptor(),
@@ -95,24 +115,39 @@ func (l *lowerServerInterceptor) StreamServerInterceptor() StreamServerIntercept
 	return l.streams
 }
 
+// Merge merges the given interceptors with the current interceptor.
+func (l *lowerServerInterceptor) Merge(interceptors ...ServerInterceptor) ServerInterceptor {
+	for _, interceptor := range interceptors {
+		l.AddUnaryInterceptor(interceptor.UnaryServerInterceptor()).
+			AddStreamInterceptor(interceptor.StreamServerInterceptor())
+	}
+	return l
+}
+
 // NewServerInterceptorRegister initializes a `ServerInterceptorRegister` with
 // an empty register and `index` as index as its index.
+// This implementation is thread-safe.
 func NewServerInterceptorRegister(index string) ServerInterceptorRegister {
 	return &higherServerInterceptorLevel{
 		ServerInterceptor: NewServerInterceptor(index),
 		sublevels:         make(map[string]ServerInterceptor),
+		lock:              &sync.RWMutex{},
 	}
 }
 
 // Get returns the `ServerInterceptor` registered at the index `key`. If nothing
 // is found, it returns (nil, false).
 func (l higherServerInterceptorLevel) Get(key string) (interceptor ServerInterceptor, exists bool) {
-	sub, exists := l.sublevels[key]
-	return sub, exists
+	l.lock.RLock()
+	defer l.lock.RUnlock()
+	interceptor, exists = l.sublevels[key]
+	return
 }
 
-// Register registers `level` indexing it by calling its method `Index`.
+// Register registers `level` at the index returned by its method `Index`.
 // It overwrites any interceptor that has already been registered at this index.
 func (l *higherServerInterceptorLevel) Register(level ServerInterceptor) {
+	l.lock.Lock()
+	defer l.lock.Unlock()
 	l.sublevels[level.Index()] = level
 }
