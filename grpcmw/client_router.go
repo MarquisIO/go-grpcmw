@@ -32,17 +32,17 @@ type clientRouter struct {
 // NewClientRouter initializes a `ClientRouter`.
 // This implementation is based on the official route format used by gRPC as
 // defined here :
-// https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md#appendix-a---grpc-for-protobuf
+// https://github.com/grpc/grpc/blob/master/doc/PROTOCOL-HTTP2.md
 //
 // Based on this format, this implementation splits the interceptors into four
 // levels:
 //   - the global level: these are the interceptors called at each request.
-//   - the package level: these are the interceptors called at each request to a
-//     service from the corresponding package.
-//   - the service level: these are the interceptors called at each request to a
-//     method from the corresponding service.
-//   - the method level: these are the interceptors called at each request to the
-//     specific method.
+//   - the package level: these are the interceptors called at each request to
+//     a service from the corresponding package.
+//   - the service level: these are the interceptors called at each request to
+//     a method from the corresponding service.
+//   - the method level: these are the interceptors called at each request to
+//     the specific method.
 func NewClientRouter() ClientRouter {
 	return &clientRouter{
 		interceptors: NewClientInterceptorRegister("global"),
