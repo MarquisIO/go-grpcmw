@@ -33,7 +33,7 @@ func (i *server{{template "pkgType" .}}) Register{{.Service}}() *server{{templat
 		){{end}}
 		{{range .Methods}}{{if .Interceptors}}
 		ret.{{.Method}}().AddInterceptor({{$method := .}}{{range .Interceptors.Indexes}}
-			registry.GetServerInterceptor("{{.}}").{{template "methodType" $method.ServerStream}}ServerInterceptor(),{{end}}
+			registry.GetServerInterceptor("{{.}}").{{template "methodType" $method.Stream}}ServerInterceptor(),{{end}}
 		){{end}}{{end}}
 		return ret
 	}
@@ -54,7 +54,7 @@ func (i *client{{template "pkgType" .}}) Register{{.Service}}() *client{{templat
 		){{end}}
 		{{range .Methods}}{{if .Interceptors}}
 		ret.{{.Method}}().AddInterceptor({{$method := .}}{{range .Interceptors.Indexes}}
-			registry.GetClientInterceptor("{{.}}").{{template "methodType" $method.ClientStream}}ClientInterceptor(),{{end}}
+			registry.GetClientInterceptor("{{.}}").{{template "methodType" $method.Stream}}ClientInterceptor(),{{end}}
 		){{end}}{{end}}
 		return ret
 	}

@@ -13,22 +13,22 @@ const (
 	methodTypeCode = `{{if .}}Stream{{else}}Unary{{end}}`
 
 	methodCode = `
-func (s *server{{template "serviceType" .}}) {{.Method}}() grpcmw.{{template "methodType" .ServerStream}}ServerInterceptor {
+func (s *server{{template "serviceType" .}}) {{.Method}}() grpcmw.{{template "methodType" .Stream}}ServerInterceptor {
 	method, ok := s.ServerInterceptor.(grpcmw.ServerInterceptorRegister).Get("{{.Method}}")
 	if !ok {
 		method = grpcmw.NewServerInterceptorRegister("{{.Method}}")
 		s.ServerInterceptor.(grpcmw.ServerInterceptorRegister).Register(method)
 	}
-	return method.{{template "methodType" .ServerStream}}ServerInterceptor()
+	return method.{{template "methodType" .Stream}}ServerInterceptor()
 }
 
-func (s *client{{template "serviceType" .}}) {{.Method}}() grpcmw.{{template "methodType" .ClientStream}}ClientInterceptor {
+func (s *client{{template "serviceType" .}}) {{.Method}}() grpcmw.{{template "methodType" .Stream}}ClientInterceptor {
 	method, ok := s.ClientInterceptor.(grpcmw.ClientInterceptorRegister).Get("{{.Method}}")
 	if !ok {
 		method = grpcmw.NewClientInterceptorRegister("{{.Method}}")
 		s.ClientInterceptor.(grpcmw.ClientInterceptorRegister).Register(method)
 	}
-	return method.{{template "methodType" .ClientStream}}ClientInterceptor()
+	return method.{{template "methodType" .Stream}}ClientInterceptor()
 }`
 )
 
